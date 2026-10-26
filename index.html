@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Problems in Agent Calling</title>
+<meta name="description" content="Issue list from agent call testing with playable proof recordings, completion tracking and developer remarks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <h1>Problems in Agent Calling</h1>
+    <div class="summary" aria-label="Progress">
+      <div class="sum-progress">
+        <span class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar"><i></i></span>
+        <span class="sum-text"><b id="statDone">0</b> / <b id="statTotal">0</b> complete</span>
+      </div>
+      <span class="stat pending"><b id="statPending">0</b> pending</span>
+      <span class="stat"><b id="statProof">0</b> with proof</span>
+      <span class="stat"><b id="statRemark">0</b> remarked</span>
+      <span class="chip" id="mode" title="Where remarks are stored">…</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="toolbar">
+    <div class="tb-row">
+    <label class="search">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search…" autocomplete="off">
+    </label>
+    <div class="seg" role="group" aria-label="Status">
+        <button type="button" data-status="all" class="on">All</button>
+        <button type="button" data-status="pending">Pending <b class="cnt" id="cntPending"></b></button>
+        <button type="button" data-status="done">Complete <b class="cnt" id="cntDone"></b></button>
+    </div>
+      <span class="showing" id="showing"></span>
+      <button type="button" id="addBtn" class="btn primary">+ Add problem</button>
+    </div>
+    <div class="tb-row filters">
+    <label class="sel"><span>Section</span>
+      <select id="fSection"><option value="all">All</option></select></label>
+    <label class="sel"><span>Proof</span>
+      <select id="fProof">
+        <option value="all">Any</option>
+        <option value="has">Has proof</option>
+        <option value="none">Proof not added</option>
+        <option value="audio">Has recording</option>
+        <option value="image">Has screenshot</option>
+        <option value="text">Has transcript</option>
+        <option value="multi">2+ proofs</option>
+      </select></label>
+    <label class="sel"><span>Duration</span>
+      <select id="fDuration">
+        <option value="all">Any</option>
+        <option value="u45">Under 45 sec</option>
+        <option value="45-60">45 sec – 1 min</option>
+        <option value="1-2">1 – 2 min</option>
+        <option value="o2">Over 2 min</option>
+        <option value="none">No recording</option>
+      </select></label>
+    <label class="sel"><span>Remark</span>
+      <select id="fRemark">
+        <option value="all">Any</option>
+        <option value="none">Needs remark</option>
+        <option value="has">Remarked</option>
+      </select></label>
+    <label class="sel"><span>Sort</span>
+      <select id="fSort">
+        <option value="num">Number</option>
+        <option value="pending">Pending first</option>
+        <option value="done">Complete first</option>
+        <option value="dur-desc">Longest recording</option>
+        <option value="dur-asc">Shortest recording</option>
+        <option value="updated">Recently updated</option>
+        <option value="title">Title A–Z</option>
+      </select></label>
+    <button type="button" id="clear" class="btn ghost" hidden>Clear</button>
+    </div>
+  </div>
+
+  <div id="sections"></div>
+  <p class="empty" id="empty" hidden>Nothing matches these filters.</p>
+</main>
+
+<footer class="wrap foot">
+  <span>Proof recordings play right here on the page. Use <em>+ Add problem</em> to log a new issue with its recording or screenshot; it is shared with everyone instantly.</span>
+</footer>
+
+<div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Screenshot">
+  <button type="button" class="lb-close" aria-label="Close">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+  <figure class="lb-body">
+    <img class="lb-img" alt="">
+    <figcaption class="lb-cap"></figcaption>
+  </figure>
+</div>
+
+<dialog id="addDlg" class="dlg" aria-labelledby="addTitle">
+  <form id="addForm" novalidate>
+    <div class="dlg-head">
+      <h2 id="addTitle">Add a problem</h2>
+      <button type="button" class="dlg-x" id="addClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="dlg-body">
+      <p class="f-note" id="addNote" hidden></p>
+      <label class="f"><span>Section</span>
+        <select name="section" id="addSection"></select></label>
+      <div id="newSec" hidden>
+        <label class="f"><span>New section name</span><input name="sectionTitle" maxlength="80" placeholder="e.g. Pramukh Problems"></label>
+        <label class="f"><span>Section subtitle <em>optional</em></span><input name="sectionSub" maxlength="160" placeholder="One line on where these issues come from"></label>
+      </div>
+      <label class="f"><span>Title</span><input name="title" required maxlength="120" placeholder="Short name of the problem"></label>
+      <label class="f"><span>Problem description</span><textarea name="problem" rows="3" required placeholder="What happened, and why it is a problem"></textarea></label>
+      <label class="f"><span>Expectation</span><textarea name="expectation" rows="2" placeholder="What should happen instead"></textarea></label>
+      <label class="f"><span>Proof files <em>recordings, screenshots</em></span>
+        <input type="file" name="files" id="addFiles" multiple accept="audio/*,image/*,.wav,.mp3,.m4a,.ogg,.opus,.webm,.png,.jpg,.jpeg,.webp">
+        <small id="addFilesInfo">They upload when you save and play right on the page.</small></label>
+      <label class="f"><span>Transcript or text proof <em>optional</em></span><textarea name="text" rows="2" placeholder="Paste a transcript excerpt"></textarea></label>
+      <label class="f"><span>Link <em>optional</em></span><input name="link" type="url" placeholder="https://"></label>
+      <p class="f-err" id="addErr" hidden></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="addCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="addSave">Add problem</button>
+    </div>
+  </form>
+</dialog>
+
+<template id="sectionTpl">
+  <section class="block">
+    <div class="block-head">
+      <div>
+        <h2 class="block-title"></h2>
+        <p class="block-sub"></p>
+      </div>
+      <div class="block-side">
+        <span class="block-progress"><i></i></span>
+        <span class="block-count"></span>
+      </div>
+    </div>
+    <div class="list">
+      <div class="row head" aria-hidden="true">
+        <div>Problem</div>
+        <div>Proof</div>
+        <div>Developer remark</div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<template id="rowTpl">
+  <article class="row item">
+    <div class="cell c-main">
+      <div class="row-top">
+        <span class="num"></span>
+        <h2 class="title"><span class="title-text"></span></h2>
+        <span class="tag t-done" hidden></span>
+        <span class="tag t-added" hidden title="Added from the page">Added from page</span>
+        <button type="button" class="rm-btn" hidden title="Remove this problem">Remove</button>
+        <button type="button" class="done-btn" aria-pressed="false" title="Mark as complete">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>
+          <span class="done-label sr-only">Mark as complete</span>
+        </button>
+      </div>
+      <p class="desc"></p>
+      <div class="expect-box"><span class="lab">Expected</span><p class="expect"></p></div>
+    </div>
+    <div class="cell c-proof" data-label="Proof"><div class="proofs"></div></div>
+    <div class="cell c-remark" data-label="Developer remark">
+      <textarea class="remark" rows="4" placeholder="Add your remark… (saves automatically)"></textarea>
+      <div class="status"></div>
+    </div>
+  </article>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

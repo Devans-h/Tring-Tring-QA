@@ -1,0 +1,6 @@
+.vercel
+__pycache__/
+store.json
+*.part
+.DS_Store
+Thumbs.db
